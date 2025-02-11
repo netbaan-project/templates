@@ -1,0 +1,35 @@
+id: fuzz-xxe-custom
+
+info:
+  name: Custom XXE Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XML External Entity (XXE) vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "POST"'  # Modify if you expect a different HTTP method
+
+    payloads:
+      xxe:
+        - "<?xml version=\"1.0\" encoding=\"UTF-7\"?> +ADwAIQ-DOCxxe foo+AFs +ADwAIQ-ELEMENT foo ANY"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: body
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xxe}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "foo"                     # Check for something in the response that indicates an XXE vulnerability
+          - "ANY"                     # Check for a specific response related to the payload

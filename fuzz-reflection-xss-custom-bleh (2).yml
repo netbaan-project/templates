@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-bleh
+
+info:
+  name: Custom Reflection XSS Detection for Bleh Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified payload that triggers JavaScript execution.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<bleh/onclick=top[/al/.source+/ert/.source]&Tab;``>click"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

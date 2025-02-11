@@ -1,0 +1,39 @@
+id: fuzz-xss-custom
+
+info:
+  name: Custom XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities using the specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "['\\');alert('\\'xss\\'');//']@xyz.xxx"  # Escaping single quotes
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "alert"  # Look for the presence of the alert function, which is indicative of XSS.
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Expect the response to be of HTML type.

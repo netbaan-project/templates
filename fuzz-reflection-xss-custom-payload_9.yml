@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-payload
+
+info:
+  name: Custom XSS Reflection Test
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for reflection XSS vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      xss_payload:
+        - "%20%3Cdetails%20x%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%3A2%20open%20ontoggle%3D%22prompt%28document.cookie%29%3B%22%3E"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

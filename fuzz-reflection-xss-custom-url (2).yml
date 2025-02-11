@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-url
+
+info:
+  name: Custom URL Parameter XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities through URL parameters using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_payload:
+        - "?url=\"onmouseover=\"alert(1)"  # Note how double quotes are escaped for YAML
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "alert(1)"  # Match against the in-page script execution
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

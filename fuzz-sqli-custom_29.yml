@@ -1,0 +1,40 @@
+id: fuzz-sqli-custom
+
+info:
+  name: Custom SQL Injection Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect SQL injection vulnerabilities using a specific encoded payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "%2522%252B%254F%2552%252B%2531%2521%253D%2537%2523"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "SQL error"                # You may want to customize this condition
+          - "not found"                # Customizable based on your application error messages
+
+      - type: status
+        status:
+          - 400
+          - 500

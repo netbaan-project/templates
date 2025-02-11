@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-url-encoded
+
+info:
+  name: URL Encoded XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect URL-encoded XSS vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "%20%60%22%2F%2F%3E%3Cscript%3Ealert%28%29%3C%2Fscript%3E"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

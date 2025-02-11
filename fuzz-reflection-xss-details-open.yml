@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-details-open
+
+info:
+  name: Reflection XSS Detection with DETAILS Tag
+  author: netbaan
+  severity: low
+  description: |
+    This template checks for potential reflection XSS vulnerabilities using a crafted DETAILS tag payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<dETAILS%0aopen%0aonToGgle%0a=\\0aa=prompt,a() x>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

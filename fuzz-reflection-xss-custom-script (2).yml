@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-script
+
+info:
+  name: Custom Script Reflection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template detects potential reflection XSS vulnerabilities using a specified payload that includes script tags.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      reflection:
+        - "eeee<%2fscript><script>prompt(/XSS/.source)<%2fscript>yyyy"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

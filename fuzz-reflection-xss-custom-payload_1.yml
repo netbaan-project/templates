@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-payload
+
+info:
+  name: Custom XSS Detection with Image Error
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities using a specified payload that triggers an error in an image.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_payload:
+        - "payload\\´; %3Cimg src='null' onerror=alert('spyerror')%3E"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "spyerror"  # Look for the alert text in the response
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

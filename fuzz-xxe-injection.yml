@@ -1,0 +1,42 @@
+id: fuzz-xxe-injection
+
+info:
+  name: XXE Injection Test
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect XML External Entity (XXE) injection vulnerabilities using a custom XXE payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "POST"'  # Assuming XXE tests generally use POST, change if necessary
+
+    payloads:
+      xxe:
+        - "<!DOC xxe foo [<!ENTITY % a \"&#x3c;&#x21; ... omitted ... \">]>" # Use double quotes, escaping inside
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: body
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xxe}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "ERROR" # Adjust this based on what your target app returns on XXE
+          - "Exception"
+          - "{{xxe}}" # Checking if the payload is reflected back shows XSS/XXE vulnerabilities
+
+      - type: status
+        status:
+          - 200
+          - 400
+          - 500 # You can adjust the status codes to match what you expect on failure

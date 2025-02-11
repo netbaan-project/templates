@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-script-injection
+
+info:
+  name: Script Injection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities using a script injection payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<=script>=alert(\"hacked\")<=/scirpt>="
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

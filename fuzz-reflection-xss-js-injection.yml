@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-js-injection
+
+info:
+  name: Custom XSS Detection with JavaScript Injection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities using a specified JavaScript payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_injection:
+        - "<a href=javas%26#99;ript:prompt%26#x28document.domain)>xss"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_injection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_injection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

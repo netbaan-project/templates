@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-detailed
+
+info:
+  name: Custom Reflective XSS Detection with DETAILS
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for reflective XSS vulnerabilities using a detailed payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run if method is GET
+
+    payloads:
+      reflection:
+        - "&lt;dETAILS%0aopen%0aonToGgle%0a%3d%0aa%3dprompt%2Ca(origin)%20x&gt;"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

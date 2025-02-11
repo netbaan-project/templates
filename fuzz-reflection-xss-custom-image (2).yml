@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-image
+
+info:
+  name: Custom Image XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a specified <img> payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<--<img/src=`%20onerror=confirm``>%20--!>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

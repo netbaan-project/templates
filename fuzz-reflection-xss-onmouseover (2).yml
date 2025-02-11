@@ -1,0 +1,40 @@
+id: fuzz-reflection-xss-onmouseover
+
+info:
+  name: Detection of XSS via Mouseover Attribute
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect potential XSS vulnerabilities 
+    using the onmouseover event through a URL parameter.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      xss_payload:
+        - "?url=\"onmouseover=\\\"alert(1)\\\""
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

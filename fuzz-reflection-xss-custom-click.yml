@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-click
+
+info:
+  name: Custom Reflection XSS Detection - Click Here!
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities by testing a specific payload with an onclick event.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<a?/onclick=(confirm)(document.cookie)>Click Here!"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

