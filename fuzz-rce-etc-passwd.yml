@@ -1,0 +1,45 @@
+id: fuzz-rce-etc-passwd
+
+info:
+  name: Remote Code Execution via File Inclusion
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect potential remote code execution vulnerabilities
+    by accessing sensitive files like /etc/passwd.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "/etc/passwd"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:"
+          - "nobody:"          # Common entries in /etc/passwd
+
+      - type: word
+        part: header
+        words:
+          - "text/plain"      # The /etc/passwd file is typically served as plain text
+
+      - type: status
+        status:
+          - 200               # Expect a successful response code

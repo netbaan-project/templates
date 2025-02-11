@@ -1,0 +1,39 @@
+id: fuzz-reflection-template-injection
+
+info:
+  name: Server-Side Template Injection Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect potential server-side template injection or XSS by using JavaScript function constructors.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      injection:
+        - "{{constructor.constructor(alert\\`1\\`)()}}"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{injection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{injection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

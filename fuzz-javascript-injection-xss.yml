@@ -1,0 +1,39 @@
+id: fuzz-javascript-injection-xss
+
+info:
+  name: JavaScript Injection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for potential JavaScript injection vulnerabilities using a hex-encoded payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      injection:
+        - "\\x61\\x6c\\x65\\x72\\x74\\x28\\x64\\x6f\\x63\\x75\\x6d\\x65\\x6e\\x74\\x2e\\x64\\x6f\\x6d\\x61\\x69\\x6e\\x29?"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{injection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{injection}}"  # Check if the payload appears in the body
+
+      - type: word
+        part: header
+        words:
+          - "text/html"      # Ensure response is HTML

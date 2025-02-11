@@ -1,0 +1,38 @@
+id: fuzz-ssrf-custom
+
+info:
+  name: Custom SSRF Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect SSRF vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      ssrf:
+        - "target[.]com/download?url=[shortened link of http://ssrfip/download?url=file://\/etc/passwd]"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{ssrf}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "etc/passwd"  # Expectation to see a response related to /etc/passwd
+
+      - type: status
+        status:
+          - 200  # HTTP status code indicating a successful request

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-style
+
+info:
+  name: XSS Detection via CSS Background Image
+  author: netbaan
+  severity: low
+  description: |
+    This template detects XSS vulnerabilities by injecting a CSS style rule with a JavaScript payload in the background image.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      xss_payload:
+        - "<style>img{background-image:url(\\'javascript:alert(1)\\')}</style>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

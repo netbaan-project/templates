@@ -1,0 +1,40 @@
+id: fuzz-reflection-xss-eval
+
+info:
+  name: Reflection XSS with eval Detection
+  author: netbaan
+  severity: high  # Increased severity due to the potential impact of eval
+  description: |
+    This template tests for reflection XSS vulnerabilities via an eval payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "\"><script>alert(1)</script>' print 'eval(String.fromCharCode(" + \
+          ",".join([str(ord(o)) for o in s]) + "))""
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "<script>alert(1)</script>"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

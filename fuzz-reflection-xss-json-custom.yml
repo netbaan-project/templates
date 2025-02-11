@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-json-custom
+
+info:
+  name: Custom JSON Reflection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified JSON payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "{\"firstname\":\"<img src =\\'\",\"lastname\":\"\\'onerror=print()>\"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{\"firstname\":\"<img src =\\'\",\"lastname\":\"\\'onerror=print()>\"
+
+      - type: word
+        part: header
+        words:
+          - "application/json"

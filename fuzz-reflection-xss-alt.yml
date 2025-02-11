@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-alt
+
+info:
+  name: Custom Reflection XSS Detection with Alert
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a specified payload that triggers JavaScript alerts.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "src=x:alert(alt) alt=3117"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

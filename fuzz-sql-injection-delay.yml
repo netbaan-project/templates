@@ -1,0 +1,40 @@
+id: fuzz-sql-injection-delay
+
+info:
+  name: SQL Injection with Delay Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect SQL injection vulnerabilities using a delay payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "SELECT * FROM test WHERE id = 1 WAITFOR DELAY '0:0:5'"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "time"
+          - "delay"
+          - "seconds"
+          - "milliseconds"
+      - type: status
+        status:
+          - 200

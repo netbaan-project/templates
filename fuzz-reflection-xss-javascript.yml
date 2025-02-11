@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-javascript
+
+info:
+  name: XSS Detection with JavaScript Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is crafted to detect reflection XSS vulnerabilities using a JavaScript payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "javascript:new%20Function\`al\\ert\`1\`;"  # Properly escaped payload
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

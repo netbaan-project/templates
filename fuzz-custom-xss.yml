@@ -1,0 +1,39 @@
+id: fuzz-custom-xss
+
+info:
+  name: Custom XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect XSS vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Running only on GET requests
+
+    payloads:
+      xss:
+        - "open(\"https://host/?xss=%3Ca/href=javascript:1%26%26%26%23x6e;ame%3Eclick me%3C/a%3E\",\"<svg onload=alert(document.domain)>\"));"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "alert(document.domain)"  # match against the JavaScript alert function in the response
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Expecting HTML content type

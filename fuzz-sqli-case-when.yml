@@ -1,0 +1,40 @@
+id: fuzz-sqli-case-when
+
+info:
+  name: Custom SQL Injection Detection Using CASE WHEN
+  author: netbaan
+  severity: high  # Adjust severity as per your requirements
+  description: |
+    This template is designed to detect SQL injection vulnerabilities using a CASE WHEN payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "(CASE+WHEN+(SELECT+1)=1+THEN+id+ELSE+updated_at+END)+ASC"  # Input your SQL Injection payload here
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        # You can specify patterns/indicators in the response body that can indicate an SQL injection
+        words:
+          - "error"  # Example: Look for SQL error messages in the response
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Ensure checking that the response is HTML

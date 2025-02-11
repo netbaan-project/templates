@@ -1,0 +1,42 @@
+id: sql-injection-test
+
+info:
+  name: SQL Injection Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect SQL injection vulnerabilities using a specific payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "%55%4eiON SeLeCt 1,2..."
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "UNION SELECT"  # Adjust based on the expected response pattern for detection
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # This assumes the response is in HTML format, adjust as necessary
+
+# Note: Ensure to properly adjust the "words" in the matchers
+# based on the expected SQL injection response.

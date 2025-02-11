@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-script-alert
+
+info:
+  name: XSS Detection Using Script Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template detects potential XSS vulnerabilities with a script payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<sCRipT>alert(1)</sCRiPt>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

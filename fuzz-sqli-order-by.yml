@@ -1,0 +1,39 @@
+id: fuzz-sqli-order-by
+
+info:
+  name: Custom SQL Injection Detection via Order By
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect SQL injection vulnerabilities using a payload that leverages the ORDER BY clause.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "/*!50000ORDER BY*/"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "error"  # Expect an SQL error message in the response body
+          - "syntax"  # Look for syntax error keywords (could be adjusted based on the target DB)
+
+      - type: status
+        status:
+          - 500  # HTTP status code indicating server error that might be triggered by the SQL error

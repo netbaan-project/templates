@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-onauxclick
+
+info:
+  name: OnAuxClick Reflection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template checks for potential reflection XSS vulnerabilities using the specified onauxclick payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - " onauxclick=confirm\\`xss\\` "  # Escaped backticks
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

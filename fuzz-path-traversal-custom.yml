@@ -1,0 +1,42 @@
+id: fuzz-path-traversal-custom
+
+info:
+  name: Custom Path Traversal Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect path traversal vulnerabilities using a specific payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      ptrav:
+        - "/???/???/c?t\\$IFS/???/p?s?w?"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: path
+        type: replace
+        mode: single
+        fuzz:
+          - "{{ptrav}}"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 403
+          - 404
+
+      - type: word
+        part: body
+        words:
+          - "Error"
+          - "not found"
+          - "forbidden"

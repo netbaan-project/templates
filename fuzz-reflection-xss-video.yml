@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-video
+
+info:
+  name: Reflection XSS Detection using Video Tag
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a video tag with an onerror event.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<video src=x onerror=\\\"prompt(xss)\\\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

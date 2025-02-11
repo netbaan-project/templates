@@ -1,0 +1,40 @@
+id: fuzz-open-redirect-custom
+
+info:
+  name: Custom Open Redirect Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect open redirect vulnerabilities using a specified payload that has percent-encoding.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      redirect:
+        - "////evil%E3%80%82com"  # URL-encoded payload for testing redirection
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        keys-regex:
+          - "redirect.*"  # Match any query parameter starting with 'redirect'
+        fuzz:
+          - "{{redirect}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: header
+        words:
+          - "////evil%E3%80%82com"  # Check response headers for the redirect
+
+      - type: status
+        status:
+          - 301  # Check for redirect status codes
+          - 302
+          - 307

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-data
+
+info:
+  name: Custom Reflection XSS Detection with Data URI
+  author: netbaan
+  severity: low
+  description: |
+    This template checks for reflection XSS vulnerabilities using a specific payload that includes a Data URI within an SVG tag.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<svg><script xlink:href=data:,alert(1) />"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

