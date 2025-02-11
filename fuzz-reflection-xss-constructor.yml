@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-constructor
+
+info:
+  name: Reflection XSS Detection using Constructor
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using the constructor payload for JavaScript execution.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run on GET requests
+
+    payloads:
+      reflection:
+        - "{{constructor.constructor('alert(1)')()}}"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "alert(1)"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

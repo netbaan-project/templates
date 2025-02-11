@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-2
+
+info:
+  name: Custom Reflection XSS Detection with Autofocus
+  author: netbaan
+  severity: low
+  description: |
+    This template checks for potential reflection XSS vulnerabilities using a specific autofocus payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "%22%20autofocus%20onfocus%00%3d(confirm)(1)%2f%2f"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom-2
+
+info:
+  name: Custom XSS Detection with Complex Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template detects potential XSS vulnerabilities using a complex payload that includes HTML and SVG.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_payload:
+        - "/*'/*\\`/*--><html \\" onmouseover=/*&lt;svg/*/onload=alert()//>"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{xss_payload}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

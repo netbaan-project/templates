@@ -1,0 +1,45 @@
+id: fuzz-lfi-custom
+
+info:
+  name: Custom Local File Inclusion Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect Local File Inclusion (LFI) vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      lfi:
+        - "file:${br}/et${u}c/pas${te}swd?/"  # LFI payload
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{lfi}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "permission denied"  # Matching possible error messages for LFI
+
+      - type: word
+        part: header
+        words:
+          - "text/html"
+          
+      - type: status
+        status:
+          - 200  # OK status when accessing a potential file
+          - 403  # Forbidden status can indicate a successful LFI attempt
+          - 404  # Not Found can also be an indicator depending on the environment

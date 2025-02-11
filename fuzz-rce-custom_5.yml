@@ -1,0 +1,41 @@
+id: fuzz-rce-custom
+
+info:
+  name: Custom RCE Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect potential Remote Code Execution (RCE) vulnerabilities 
+    using the specified payload /??c/?asswd.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce-payload:
+        - "/??c/?asswd"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: path
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce-payload}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root"
+          - "passwd"
+          - "user"
+
+      - type: status
+        status:
+          - 200

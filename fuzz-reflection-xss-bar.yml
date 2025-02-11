@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-bar
+
+info:
+  name: Custom Reflection XSS Detection with Null Byte Injection
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified payload with null byte injection.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Only run for GET requests
+
+    payloads:
+      reflection:
+        - "%20foo_bar%00=foo%20bar%00=foo%5bbarfoo[bar"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-alerter
+
+info:
+  name: XSS Detection with Alert Payload
+  author: netbaan
+  severity: low
+  description: |
+    This template attempts to detect XSS vulnerabilities using a specific alert payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      xss_alert:
+        - "%60%2balert/**/(1)%2b%60"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{xss_alert}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "alert(1)"  # Check for alert function execution in the body
+
+      - type: word
+        part: header
+        words:
+          - "text/html"  # Ensure the response is HTML

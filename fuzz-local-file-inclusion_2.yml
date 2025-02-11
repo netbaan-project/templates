@@ -1,0 +1,39 @@
+id: fuzz-local-file-inclusion
+
+info:
+  name: Local File Inclusion Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template tests for Local File Inclusion vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      lfi:
+        - "file:$(br)/et$(u)c/pas$(te)swd?/"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{lfi}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "include"  # Look for responses that indicate file inclusion or error messages related to LFI
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

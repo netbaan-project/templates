@@ -1,0 +1,41 @@
+id: fuzz-rce-custom
+
+info:
+  name: Custom Remote Code Execution Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect Remote Code Execution (RCE)
+    vulnerabilities using a specified traversal payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "../../../../../../e*c/p*s*d{{\' http://server/..."
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: path
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "success"                 # Adjust based on expected response
+          - "executed"                # Adjust based on expected response
+
+      - type: status
+        status:
+          - 200                      # Check for success status codes
+          - 302                      # Possible redirects after execution

