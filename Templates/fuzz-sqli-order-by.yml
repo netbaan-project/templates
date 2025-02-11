@@ -36,4 +36,4 @@ http:
 
       - type: status
         status:
-          - 500  # HTTP status code indicating server error that might be triggered by the SQL error
+          - 500

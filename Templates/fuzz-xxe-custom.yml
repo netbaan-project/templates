@@ -36,5 +36,4 @@ http:
 
       - type: status
         status:
-          - 500                     # Check for server error status
           - 400                     # Other status codes that might indicate an issue

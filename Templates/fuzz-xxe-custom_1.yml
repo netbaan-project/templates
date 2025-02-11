@@ -34,8 +34,6 @@ http:
           - "root:"  # Look for lines indicating successful inclusion of /etc/passwd content
           - "bin:"
           - "daemon:"
-          - "user:"
-          - "nologin:"
 
       - type: word
         part: header

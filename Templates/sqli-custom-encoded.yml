@@ -39,7 +39,6 @@ http:
         words:
           - "syntax error"       # Common SQL error
           - "SQL"                # General SQL mentions
-          - "database error"     # Database error message
    
       - type: status
         status:

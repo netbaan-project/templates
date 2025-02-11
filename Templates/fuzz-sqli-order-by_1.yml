@@ -35,5 +35,5 @@ http:
 
       - type: status
         status:
-          - 500  # Common error status for SQL injections
-          - 200  # OK status to confirm injection was successful and altered behavior
+          - 500 
+          - 200

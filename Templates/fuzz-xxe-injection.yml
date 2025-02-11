@@ -31,12 +31,9 @@ http:
       - type: word
         part: body
         words:
-          - "ERROR" # Adjust this based on what your target app returns on XXE
-          - "Exception"
           - "{{xxe}}" # Checking if the payload is reflected back shows XSS/XXE vulnerabilities
 
       - type: status
         status:
           - 200
           - 400
-          - 500 # You can adjust the status codes to match what you expect on failure
