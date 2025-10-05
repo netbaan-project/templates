@@ -1,1 +1,1 @@
-# nuclei-templates
+# templates
